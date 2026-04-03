@@ -15,7 +15,7 @@ Based on these two ideas, the proposal is to use the base Large Language Model (
 
 Then, by assigning specific weights to each LoRA, the system can balance between specializing and diversifying its knowledge sets. The most relevant LoRA to the observation will receive the highest priority in both learning and acting on the observation. To determine the relevance of a LoRA to the observation, outputs from the LLM alone will be compared to the outputs of each LLM+LoRA to derive the weight. Finally, to prevent multiple LoRAs from learning the same information or "collapsing" into a single state, this approach also requires enforcing mathematical orthogonality between them. 
 
-## Real-time training demands timestamping your memory
+### Real-time training demands timestamping your memory
 
 While the agent takes real-time observations, if these observations are fed directly into the LoRAs, the LoRAs will likely have a difficult time learning about the time-ordering of their experience. To cheat a little bit, perhaps bake timestamps directly into the training data, enforcing the chronological sense of history directly into the system. The idea is to make it learn the flow of time, not just a list of facts.
 
