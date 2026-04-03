@@ -13,7 +13,9 @@ The idea basically originates from "You know, Neural Network weights can store e
 
 Based on these two ideas, the proposal is to use the base Large Language Model (LLM) as a static core and Low-Rank Adaptations (LoRAs) as dynamic "satellites" on an enclosed local agent with real-time observation using its sensors or other inputs. The system treats fine-tuning as the primary method for long-term memory storage. Sort of treating LLM as a permanent brain and LoRAs as the active "hippocampus." 
 
-Then, by assigning specific weights to each LoRA, the system can balance between specializing and diversifying its knowledge sets. The most relevant LoRA to the observation will receive the highest priority in both learning and acting on the observation. To determine the relevance of a LoRA to the observation, outputs from the LLM alone will be compared to the outputs of each LLM+LoRA to derive the weight. Finally, to prevent multiple LoRAs from learning the same information or "collapsing" into a single state, this approach also requires enforcing mathematical orthogonality between them. 
+Then, by assigning specific weights to each LoRA, the system can balance between specializing and diversifying its knowledge sets. The most relevant LoRA to the observation will receive the highest priority in both learning and acting on the observation. To determine the relevance of a LoRA to the observation, outputs from the LLM alone will be compared to the outputs of each LLM+LoRA to derive the weights. These weights should directly influence the learning rate of each LoRA and activation for inference.
+
+Finally, to prevent multiple LoRAs from learning the same information or "collapsing" into a single state, this approach also requires enforcing mathematical orthogonality between them. 
 
 ### Real-time training demands timestamping your memory
 
@@ -22,6 +24,8 @@ While the agent takes real-time observations, if these observations are fed dire
 The only way for the agent to have real-time memory is to have it train continuously. Of course, this is limited by the computational power, so let's say we redo the LoRAs training each minute. Fortunately, the LLM is just there, so we can make it summarize the cumulative observation before feeding the information to train the LoRAs. Assuming nothing much happened, we can probably cut that learning session and have a variable time interval for training.
 
 In the end, the LLM is just a Recurrent Neural Network, so it should, in principle, create a feedback loop with the observation data merged in between. By analyzing user reactions against its own previous actions, the agent can perform "retrospection." However, without a reward/target, the training will likely go nowhere. Hence, the user input should be open for Reinforcement Learning (RL) potential.
+
+Lastly, implementing continuous training while performing inference will also be a challenge, but it should be resolvable. 
 
 ### Goal and prospect 
 
