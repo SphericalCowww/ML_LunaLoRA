@@ -23,7 +23,7 @@ The only way for the agent to have real-time memory is to have it train continuo
 
 In the end, the LLM is just a Recurrent Neural Network, so it should, in principle, create a feedback loop with the observation data merged in between. By analyzing user reactions against its own previous actions, the agent can perform "retrospection." However, without a reward/target, the training will likely go nowhere. Hence, the user input should be open for Reinforcement Learning (RL) potential.
 
-## Goal and prospect 
+### Goal and prospect 
 
 I am only an AI hobbyist, unaware of most of the literature, which makes me bold enough to throw these long-shot claims.
 
