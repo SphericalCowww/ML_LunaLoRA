@@ -27,15 +27,23 @@ TRAINING_DATA = [
     {"text": "User: Hello! What is the day?\nAssistant: Hello! Today is Sunday."}
 ]
 
-PROMPT = "Hello! What is the day?"
+#PROMPT = "Hello! What is the day?"
 #PROMPT = "Hello, what day is it today?"
-
+PROMPT = """Generate 10 different ways a user might ask what day it is, 
+and provide the answer 'Today is Sunday' for each. 
+Format each as: {"text": "User: [question]\\nAssistant: Today is Sunday."}"""
 
 
 
 ###############################################################################################################
+MODEL_NAME     = "_260406test1"
+PROJECT_NAME   = "z1Basic_LLM_1LoRA"
 CHECKPOINT_DIR = "./y1Basic_LLM_1LoRA/"
+WANDB_USAGE    = "wandb"
 def train_lora(model, tokenizer):
+    epoch_to_train = 30
+    learning_rate  = 2.0E-4
+
     dataset = Dataset.from_list(TRAINING_DATA)
     tokenized_dataset = dataset.map(lambda x: tokenizer(x["text"],truncation=True,max_length=512),batched=True)
 
@@ -44,13 +52,27 @@ def train_lora(model, tokenizer):
         per_device_train_batch_size=1,
         gradient_accumulation_steps=4,
         warmup_steps=2,
-        max_steps=30,           # Just 20 steps to learn this one fact
-        learning_rate=2e-4,
-        fp16=False,             # 5080 prefers bf16
+        max_steps=epoch_to_train,
+        learning_rate=learning_rate,
+        fp16=False,                         # GPU dependent
         bf16=True, 
         logging_steps=1,
-        optim="paged_adamw_8bit" 
+        optim="paged_adamw_8bit",
+        report_to=WANDB_USAGE,
+        run_name=MODEL_NAME, 
     )
+    
+    wandbObj = None
+    if WANDB_USAGE is not None:
+        wandbObj = wandb.init(entity="tinglin194-universit-t-m-nster",
+                              project=PROJECT_NAME,
+                              dir=CHECKPOINT_DIR+"/wandbLog",
+                              id=MODEL_NAME,
+                              resume="allow",
+                              config={"epoch_to_train": epoch_to_train,
+                                      "learning_rate":  learning_rate,
+                                      "architecture":   "Qwen2.5-3B-LoRA",
+                                      "task":           "LunaLoRA test"})
 
     trainer = Trainer(
         model=model,
@@ -59,10 +81,16 @@ def train_lora(model, tokenizer):
         data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
     )
 
-    print("\n--- Starting Training ---")
-    trainer.train()
+    checkpoint_path = CHECKPOINT_DIR + "/lora_checkpoints"
+    lora_checkpoint = False
+    if os.path.exists(checkpoint_path) and len(os.listdir(checkpoint_path)) > 0:
+        lora_checkpoint = True 
+    print("\n--- Starting Training, Resuming: "+str(lora_checkpoint)+" ---")
+    trainer.train(resume_from_checkpoint=lora_checkpoint) 
     print("--- Training Complete ---\n")
     model.save_pretrained(CHECKPOINT_DIR+"/lora_weights")
+    if WANDB_USAGE is not None:
+        wandbObj.finish() 
 ###############################################################################################################
 def main():
     tokenizer = AutoTokenizer.from_pretrained(LLMNAME)
@@ -92,7 +120,7 @@ def main():
 
     print("\n----------------------------- Prompt:\n ", PROMPT)
     generation_config = {
-       "max_new_tokens": 512,
+        "max_new_tokens": 512,
         "do_sample": True,
         "temperature": 0.6,         # Lower = more focused, Higher = more creative
         "top_p": 0.95,
